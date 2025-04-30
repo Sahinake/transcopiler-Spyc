@@ -12,16 +12,17 @@ Este projeto foi desenvolvido como parte da disciplina de **Compiladores** e uti
 - Geração de código C com identação apropriada
 
 ## Estrutura do Projeto
+```bash
 ├── output
-    └── output.c        # Código equivalente em C
-├── lexer.py            # Analisador léxico (tokens) 
-├── parser.py           # Analisador sintático e construtor de AST 
-├── ast_nodes.py        # Definições dos nós da AST 
-├── gencode.py          # Geração de código C a partir da AST 
-├── main.py             # Arquivo principal para rodar o transpilador 
-├── requirements.txt    # Dependências do projeto 
-└── README.md           # Este arquivo
-
+    └── output.c             # Código equivalente em C
+├── lexer.py                 # Analisador léxico (tokens)
+├── parser.py                # Analisador sintático e construtor de AST
+├── ast_nodes.py             # Definições dos nós da AST
+├── gencode.py               # Geração de código C a partir da AST
+├── main.py                  # Arquivo principal para rodar o transpilador
+├── requirements.txt         # Dependências do projeto
+└── README.md                # Este arquivo
+```
 
 ## Requisitos
 
