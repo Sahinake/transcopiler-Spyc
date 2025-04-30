@@ -1,2 +1,25 @@
-# main.py
-import test  # Isso irá executar o código no test.py
+import os
+from parser import parser
+from codegen import CGenerator
+
+codigo_python = '''
+def saudacao():
+    nome = 3
+    mensagem = 2 + (nome * 3) + 4
+'''
+
+# Faz o parsing do código Python
+ast = parser.parse(codigo_python)
+
+# Gera o código C
+gen = CGenerator()
+codigo_c = gen.generate(ast)
+
+# Cria a pasta 'output' se ela não existir
+os.makedirs("output", exist_ok=True)
+
+# Salva o código C no arquivo 'output/output.c'
+with open("output/output.c", "w") as f:
+    f.write(codigo_c)
+
+print("Código C gerado em 'output/output.c'")

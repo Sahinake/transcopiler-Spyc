@@ -1,0 +1,12 @@
+# Diretórios comuns
+__pycache__/
+*.pyc
+
+# Ambiente virtual
+venv/
+.env/
+.venv/
+
+# Arquivos gerados pelo PLY
+parser.out
+parsetab.py
