@@ -40,6 +40,11 @@ class CGenerator:
             self.indent_level -= 1
             self.emit("}")
 
+        # RETURN
+        elif isinstance(node, Return):
+            expr = self.generate_expr(node.value)
+            self.emit(f"return {expr};")
+
         # IF / ELSE
             # Gera um bloco if (e opcionalmente else) em C.
             # Usa generate_expr para obter a condição.

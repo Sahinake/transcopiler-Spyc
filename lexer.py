@@ -31,7 +31,8 @@ reserved = {
     'and': 'AND',
     'or': 'OR',
     'not': 'NOT',
-    'pass': 'PASS'
+    'pass': 'PASS',
+    'return': 'RETURN',
 }
 tokens += list(reserved.values())
 

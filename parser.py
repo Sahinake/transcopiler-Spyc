@@ -80,6 +80,13 @@ def p_funcdef(p):
     p[0] = FunctionDef(p[2], p[7])
 
 # ---------------------------------------------------------------------
+# Retorno de Função
+# ---------------------------------------------------------------------
+def p_stmt_return(p):
+    'statement : RETURN expression NEWLINE'
+    p[0] = Return(p[2])
+
+# ---------------------------------------------------------------------
 # Estrutura condicional (if / if-else)
 # ---------------------------------------------------------------------
     # Cria um nó If com a condição (p[2]), o bloco then (p[5]) e opcionalmente o else (p[9]).

@@ -3,9 +3,8 @@ from parser import parser
 from codegen import CGenerator
 
 codigo_python = '''
-def saudacao():
-    nome = 3
-    mensagem = 2 + (nome * 3) + 4
+def soma():
+    return 1 + 2
 '''
 
 # Faz o parsing do código Python
