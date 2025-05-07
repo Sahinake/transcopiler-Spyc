@@ -10,6 +10,8 @@ class CGenerator:
         self.indent_level = 0
         # Lista onde o código C gerado será acumulado linha por linha.
         self.result = []
+        # Lista de funções definidas no código
+        self.functions = []
 
     # Função Emit
         # Adiciona uma linha ao código C, com a indentação apropriada (4 espaços por nível).
@@ -25,8 +27,33 @@ class CGenerator:
             # Itera sobre todos os comandos do programa e gera código para cada um.
             # No final, retorna todo o código como uma string com quebras de linha.
         if isinstance(node, Program):
+            # 1) Bibliotecas necessárias
+            self.result.append("#include <stdio.h>")
+            self.result.append("#include <string.h>")
+            self.result.append("")
+
+            # 2) Separar funções e statements de main
+            funcs = []
+            main_stmts = []
             for stmt in node.statements:
+                if isinstance(stmt, FunctionDef):
+                    funcs.append(stmt)
+                else:
+                    main_stmts.append(stmt)
+
+            # 2) Gere todas as funções
+            for f in funcs:
+                self.generate(f)
+
+            # 3) Gere a função main
+            self.emit("int main() {")
+            self.indent_level += 1
+            for stmt in main_stmts:
                 self.generate(stmt)
+            self.emit("return 0;")
+            self.indent_level -= 1
+            self.emit("}")
+            
             return "\n".join(self.result)
         # FUNCTION DEF
             # Gera a definição de uma função em C.
