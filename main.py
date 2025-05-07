@@ -3,8 +3,14 @@ from parser import parser
 from codegen import CGenerator
 
 codigo_python = '''
-def soma():
-    return 1 + 2
+def soma(a, int b):
+    return a + b
+
+def media(float x, float y, float z):
+    return (x + y + z) / 3
+
+y = soma(2, 3)
+z = media(1.0, 2.5, 4.5)
 '''
 
 # Faz o parsing do código Python

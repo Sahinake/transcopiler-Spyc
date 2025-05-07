@@ -2,6 +2,17 @@ import ply.yacc as yacc     # biblioteca de análise sintática (parser).
 from lexer import tokens    # importados do analisador léxico (lexer.py), são usados nas regras.
 from ast_nodes import *     # define as classes de nós da árvore sintática abstrata (como Program, Assignment, If, etc.).
 
+# precedências (da mais baixa para a mais alta)
+precedence = (
+    ('left',  'OR'),
+    ('left',  'AND'),
+    ('right', 'NOT'),
+    ('nonassoc', 'LT','LE','GT','GE','EQEQ','NE'),
+    ('left',  'PLUS','MINUS'),
+    ('left',  'TIMES','DIVIDE'),
+)
+
+
 # ---------------------------------------------------------------------
 # PROGRAM
 # ---------------------------------------------------------------------
@@ -75,9 +86,60 @@ def p_assign(p):
 # ---------------------------------------------------------------------
     # Função sem parâmetros.
     # Cria um nó FunctionDef com o nome da função e seu corpo (bloco).
+# Definindo uma função com parâmetros
 def p_funcdef(p):
-    'statement : DEF NAME LPAREN RPAREN COLON NEWLINE block'
-    p[0] = FunctionDef(p[2], p[7])
+    'statement : DEF NAME LPAREN param_list RPAREN COLON NEWLINE block'
+    param_names, param_types = p[4]
+    p[0] = FunctionDef(p[2], param_names, param_types, p[8])
+
+# Definindo um único parâmetro com tipo
+def p_param(p):
+    '''param : TYPE NAME
+            | NAME'''
+    if len(p) == 3:
+        # veio com anotação explícita: p[1]=tipo, p[2]=nome
+        p[0] = (p[2], p[1])
+    else:
+        # só NAME → inferimos int por padrão
+        p[0] = (p[1], 'int')
+
+# Lista de parâmetros (separados por vírgula)
+def p_param_list(p):
+    '''param_list : param_list COMMA param
+                  | param'''
+    if len(p) == 4:  # caso com vírgula
+        names, types = p[1]  # parâmetros acumulados
+        name, type_ = p[3]  # novo parâmetro
+        p[0] = (names + [name], types + [type_])  # adiciona à lista de parâmetros
+    else:  # caso de um único parâmetro
+        name, type_ = p[1]
+        p[0] = ([name], [type_])  # começa com um parâmetro
+
+
+# ---------------------------------------------------------------------
+# Chamada de Função
+# ---------------------------------------------------------------------
+def p_expression_function_call(p):
+    "expression : NAME LPAREN arg_list RPAREN"
+    p[0] = FunctionCall(p[1], p[3])
+
+def p_arg_list(p):
+    """
+    arg_list : expression
+             | arg_list COMMA expression
+             | empty
+    """
+    if len(p) == 2:
+        if p[1] is None:
+            p[0] = []
+        else:
+            p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+def p_empty(p):
+    'empty :'
+    p[0] = None
 
 # ---------------------------------------------------------------------
 # Retorno de Função
@@ -150,6 +212,33 @@ def p_expression_number(p):
 def p_expression_name(p):
     'expression : NAME'
     p[0] = Name(p[1])
+    
+    # String
+def p_expression_string(p):
+    'expression : STRING'
+    from ast_nodes import String
+    p[0] = String(p[1])
+
+    # AND
+def p_expression_and(p):
+    'expression : expression AND expression'
+    from ast_nodes import BinOp
+    # no C, usaremos &&
+    p[0] = BinOp(p[1], '&&', p[3])
+
+    # OR
+def p_expression_or(p):
+    'expression : expression OR expression'
+    from ast_nodes import BinOp
+    # no C, usaremos ||
+    p[0] = BinOp(p[1], '||', p[3])
+
+    # NOT
+def p_expression_not(p):
+    'expression : NOT expression'
+    from ast_nodes import UnaryOp
+    # no C, usaremos !
+    p[0] = UnaryOp('!', p[2])
 
 # ---------------------------------------------------------------------
 # Tratamentos de Erros

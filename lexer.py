@@ -17,6 +17,8 @@ tokens = [
     'LT','GT','LE','GE','EQEQ','NE',
     'ASSIGN','LPAREN','RPAREN','COLON',
     'NEWLINE','INDENT','DEDENT',
+    'COMMA',
+    'TYPE',
 ]
 
 # PALAVRAS-CHAVE
@@ -52,6 +54,7 @@ t_ASSIGN  = r'='
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
 t_COLON   = r':'
+t_COMMA = r','
 
 # COMENTÁRIOS
 # Essa função ignora comentários iniciados por #. Eles não são retornados como tokens.
@@ -62,6 +65,11 @@ def t_COMMENT(t):
 # IDENTIFICADORES E PALAVRAS-CHAVE
 # Reconhece nomes de variáveis ou funções.
 # Se for uma palavra-chave reservada (como if, while, etc.), troca o tipo para o correspondente (IF, WHILE...).
+
+def t_TYPE(t):
+    r'int|float|char'   # ou qualquer regex que cubra seus tipos
+    return t
+
 def t_NAME(t):
     r'[A-Za-z_][A-Za-z0-9_]*'
     t.type = reserved.get(t.value, 'NAME')

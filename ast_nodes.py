@@ -27,9 +27,16 @@ class Program(Node):
 # A classe armazena o nome da função e o corpo dela, sendo útil para gerar o código de definição de funções na linguagem alvo (C).
 
 class FunctionDef(Node):
-    def __init__(self, name, body):
+    def __init__(self, name, params, types, body):
         self.name = name
+        self.params = params
+        self.types = types  # Tipos dos parâmetros (ex: ['int', 'int'])
         self.body = body
+
+class FunctionCall(Node):
+    def __init__(self, name, args):
+        self.name = name  # Nome da função chamada
+        self.args = args  # Lista de argumentos (ex: [x, y])
 
 # ---------------------------------------------------------------------------------------------------
 # IF
@@ -120,6 +127,19 @@ class Name(Node):
 class Number(Node):
     def __init__(self, value):
         self.value = value
+
+# ---------------------------------------------------------------------------------------------------
+# STRING
+# ---------------------------------------------------------------------------------------------------
+class String(Node):
+    def __init__(self, value):
+        # value já inclui as aspas, ex: '"hello"' ou "'mundo'"
+        self.value = value
+
+class UnaryOp(Node):
+    def __init__(self, op, operand):
+        self.op = op      # ex: '!'
+        self.operand = operand
 
 # ---------------------------------------------------------------------------------------------------
 # RETURN

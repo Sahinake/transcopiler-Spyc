@@ -33,7 +33,8 @@ class CGenerator:
             # O nome da função vem de node.name, e o corpo é gerado recursivamente com node.body.
             # O corpo da função é indentado.
         elif isinstance(node, FunctionDef):
-            self.emit(f"void {node.name}() {{")
+            param_str = ', '.join(f"{t} {p}" for t, p in zip(node.types, node.params))
+            self.emit(f"void {node.name}({param_str}) {{")
             self.indent_level += 1
             for stmt in node.body:
                 self.generate(stmt)
@@ -117,6 +118,17 @@ class CGenerator:
             # Retorna o número como string.
         elif isinstance(expr, Number):
             return str(expr.value)
+        # STRING
+        elif isinstance(expr, String):
+            # imprime a aspa junto
+            return expr.value
+        elif isinstance(expr, UnaryOp):
+            operand = self.generate_expr(expr.operand)
+            return f"{expr.op}{operand}"
+        # Função chamada
+        elif isinstance(expr, FunctionCall):
+            args = ', '.join(self.generate_expr(arg) for arg in expr.args)  # Gera os argumentos
+            return f"{expr.name}({args})"
         # ERROS
             # Erro para expressões não tratadas
         else:
