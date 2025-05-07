@@ -63,6 +63,19 @@ def p_statement_comment(p):
     from ast_nodes import Comment
     p[0] = Comment(p[1])
 
+
+# ---------------------------------------------------------------------
+# Chamadas de função como statement
+# ---------------------------------------------------------------------
+def p_statement_funccall(p):
+    'statement : NAME LPAREN arg_list RPAREN NEWLINE'
+    p[0] = FunctionCall(p[1], p[3])
+
+# Expressão solta como statement (captura qualquer outro expression NEWLINE)
+def p_statement_expr(p):
+    'statement : expression NEWLINE'
+    p[0] = p[1]
+
 # ---------------------------------------------------------------------
 # Comandos Simples
 # ---------------------------------------------------------------------
@@ -127,7 +140,7 @@ def p_param_list(p):
 # Chamada de Função
 # ---------------------------------------------------------------------
 def p_expression_function_call(p):
-    "expression : NAME LPAREN arg_list RPAREN"
+    'expression : NAME LPAREN arg_list RPAREN'
     p[0] = FunctionCall(p[1], p[3])
 
 def p_arg_list(p):
@@ -137,10 +150,7 @@ def p_arg_list(p):
              | empty
     """
     if len(p) == 2:
-        if p[1] is None:
-            p[0] = []
-        else:
-            p[0] = [p[1]]
+        p[0] = [] if p[1] is None else [p[1]]
     else:
         p[0] = p[1] + [p[3]]
 

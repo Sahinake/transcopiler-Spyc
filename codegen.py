@@ -10,6 +10,8 @@ class CGenerator:
         self.indent_level = 0
         # Lista onde o código C gerado será acumulado linha por linha.
         self.result = []
+        # Mapa de tipos de variáveis definidas no main
+        self.main_env = {}
 
     # Função Emit
         # Adiciona uma linha ao código C, com a indentação apropriada (4 espaços por nível).
@@ -19,17 +21,21 @@ class CGenerator:
 
     # Inferência de tipo simples para retorno e variáveis
     def infer_type(self, expr, env):
-        from ast_nodes import Number, BinOp, Name, FunctionCall
+        from ast_nodes import Number, BinOp, Name, FunctionCall, String
+        # input() sempre retorna string
+        if isinstance(expr, FunctionCall) and expr.name == 'input':
+            return 'char*'
         if isinstance(expr, Number):
             return 'float' if isinstance(expr.value, float) else 'int'
+        if isinstance(expr, String):
+            return 'char*'
         if isinstance(expr, BinOp):
             t1 = self.infer_type(expr.left, env)
             t2 = self.infer_type(expr.right, env)
             return 'float' if 'float' in (t1, t2) else 'int'
         if isinstance(expr, Name):
-            return env.get(expr.id, 'int')
-        if isinstance(expr, FunctionCall):
-            return env.get(expr.name + '_ret', 'int')
+            # procura nas variáveis do main e depois no ambiente local
+            return self.main_env.get(expr.id, env.get(expr.id, 'int'))
         return 'int'
 
     # Função Principal: Generate
@@ -44,24 +50,28 @@ class CGenerator:
             self.result.append("#include <stdio.h>")
             self.result.append("#include <string.h>")
             self.result.append("")
-            # Separar defs e main
+
+            # Separar definições de função e statements do main
             funcs, mains = [], []
             for s in node.statements:
                 (funcs if isinstance(s, FunctionDef) else mains).append(s)
-            # Inferir tipos de retorno
-            env = {}
+
+            # Inferir tipos de retorno das funções
+            func_env = {}
             for f in funcs:
-                param_env = {p: t for p, t in zip(f.params, f.types)}
+                env = {p: t for p, t in zip(f.params, f.types)}
+                ret_t = 'void'
                 for st in f.body:
                     if isinstance(st, Return):
-                        env[f.name + '_ret'] = self.infer_type(st.value, param_env)
+                        ret_t = self.infer_type(st.value, env)
                         break
-                else:
-                    env[f.name + '_ret'] = 'void'
+                func_env[f.name + '_ret'] = ret_t
+
             # Gerar funções
             for f in funcs:
                 self.generate(f)
                 self.result.append("")
+
             # Gerar main
             self.emit("int main() {")
             self.indent_level += 1
@@ -131,9 +141,24 @@ class CGenerator:
             # Usa generate_expr para avaliar o lado direito.
             # Aqui há uma simplificação: toda variável é declarada como int. Isso pode ser melhorado depois, se desejar gerar código com inferência ou tipos diferentes.
         elif isinstance(node, Assignment):
-            expr = self.generate_expr(node.value)
-            t = self.infer_type(node.value, {})
-            self.emit(f"{t} {node.target.id} = {expr};")
+            # Tratamento especial para input()
+            if isinstance(node.value, FunctionCall) and node.value.name == 'input':
+                var = node.target.id
+                t = self.infer_type(node.value, {})
+                # declarar buffer para string
+                self.emit(f"char {var}[256];")
+                self.main_env[var] = t
+                # prompt, se houver
+                if node.value.args:
+                    prompt = self.generate_expr(node.value.args[0])
+                    self.emit(f"printf({prompt});")
+                # scanf para string com especificadores corretos
+                self.emit(f"scanf(\"%255s\", {var});")
+            else:
+                expr = self.generate_expr(node.value)
+                t = self.infer_type(node.value, {})
+                self.emit(f"{t} {node.target.id} = {expr};")
+                self.main_env[node.target.id] = t
 
         # COMANDOS SIMPLES
             # Traduções diretas dos comandos break, continue, e pass.
@@ -148,6 +173,24 @@ class CGenerator:
         elif isinstance(node, Comment):
             # emitir com // prefixo
             self.emit(f"// {node.text}")
+
+        elif isinstance(node, FunctionCall):
+            # Mapeamento de print()
+            if node.name == 'print':
+                specs, vals = [], []
+                for arg in node.args:
+                    t = self.infer_type(arg, {})
+                    if t == 'int': spec = '%d'
+                    elif t == 'float': spec = '%f'
+                    else: spec = '%s'
+                    specs.append(spec)
+                    vals.append(self.generate_expr(arg))
+                fmt = ' '.join(specs) + '\\n'
+                args_list = ', '.join(vals)
+                self.emit(f"printf(\"{fmt}\", {args_list});")
+            else:
+                args = ', '.join(self.generate_expr(a) for a in node.args)
+                self.emit(f"{node.name}({args});")
 
         # ERRO PARA NÓS NÃO TRATADOS
             # Levanta um erro caso seja passado um nó que ainda não tem suporte na geração de código.

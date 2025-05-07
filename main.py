@@ -12,6 +12,12 @@ def media(float x, float y, float z):
 
 y = soma(2, 3)
 z = media(1.0, 2.5, 4.5)
+
+name = input("Enter your name: ")
+age = input("Enter your age: ")
+print("Hello,", name)
+print("You are", age, "years old")
+
 # fim do arquivo
 '''
 
