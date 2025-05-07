@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 
-void soma(int a, int b) {
+int soma(int a, int b) {
     return (a + b);
 }
-void media(float x, float y, float z) {
+
+float media(float x, float y, float z) {
     return (((x + y) + z) / 3);
 }
+
 int main() {
     // esse é um comentário de topo
     int y = soma(2, 3);

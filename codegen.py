@@ -10,14 +10,27 @@ class CGenerator:
         self.indent_level = 0
         # Lista onde o código C gerado será acumulado linha por linha.
         self.result = []
-        # Lista de funções definidas no código
-        self.functions = []
 
     # Função Emit
         # Adiciona uma linha ao código C, com a indentação apropriada (4 espaços por nível).
         # É uma função auxiliar que facilita a geração de código identado corretamente.
     def emit(self, line):
         self.result.append("    " * self.indent_level + line)
+
+    # Inferência de tipo simples para retorno e variáveis
+    def infer_type(self, expr, env):
+        from ast_nodes import Number, BinOp, Name, FunctionCall
+        if isinstance(expr, Number):
+            return 'float' if isinstance(expr.value, float) else 'int'
+        if isinstance(expr, BinOp):
+            t1 = self.infer_type(expr.left, env)
+            t2 = self.infer_type(expr.right, env)
+            return 'float' if 'float' in (t1, t2) else 'int'
+        if isinstance(expr, Name):
+            return env.get(expr.id, 'int')
+        if isinstance(expr, FunctionCall):
+            return env.get(expr.name + '_ret', 'int')
+        return 'int'
 
     # Função Principal: Generate
         # Essa função navega na AST e chama recursivamente o código necessário para cada tipo de nó.
@@ -27,44 +40,54 @@ class CGenerator:
             # Itera sobre todos os comandos do programa e gera código para cada um.
             # No final, retorna todo o código como uma string com quebras de linha.
         if isinstance(node, Program):
-            # 1) Bibliotecas necessárias
+            # Cabeçalhos
             self.result.append("#include <stdio.h>")
             self.result.append("#include <string.h>")
             self.result.append("")
-
-            # 2) Separar funções e statements de main
-            funcs = []
-            main_stmts = []
-            for stmt in node.statements:
-                if isinstance(stmt, FunctionDef):
-                    funcs.append(stmt)
+            # Separar defs e main
+            funcs, mains = [], []
+            for s in node.statements:
+                (funcs if isinstance(s, FunctionDef) else mains).append(s)
+            # Inferir tipos de retorno
+            env = {}
+            for f in funcs:
+                param_env = {p: t for p, t in zip(f.params, f.types)}
+                for st in f.body:
+                    if isinstance(st, Return):
+                        env[f.name + '_ret'] = self.infer_type(st.value, param_env)
+                        break
                 else:
-                    main_stmts.append(stmt)
-
-            # 2) Gere todas as funções
+                    env[f.name + '_ret'] = 'void'
+            # Gerar funções
             for f in funcs:
                 self.generate(f)
-
-            # 3) Gere a função main
+                self.result.append("")
+            # Gerar main
             self.emit("int main() {")
             self.indent_level += 1
-            for stmt in main_stmts:
-                self.generate(stmt)
+            for s in mains:
+                self.generate(s)
             self.emit("return 0;")
             self.indent_level -= 1
             self.emit("}")
-            
             return "\n".join(self.result)
         # FUNCTION DEF
             # Gera a definição de uma função em C.
             # O nome da função vem de node.name, e o corpo é gerado recursivamente com node.body.
             # O corpo da função é indentado.
         elif isinstance(node, FunctionDef):
-            param_str = ', '.join(f"{t} {p}" for t, p in zip(node.types, node.params))
-            self.emit(f"void {node.name}({param_str}) {{")
+            # Retorno e assinatura
+            env = {p: t for p, t in zip(node.params, node.types)}
+            ret = 'void'
+            for st in node.body:
+                if isinstance(st, Return):
+                    ret = self.infer_type(st.value, env)
+                    break
+            sig = ', '.join(f"{t} {p}" for t, p in zip(node.types, node.params))
+            self.emit(f"{ret} {node.name}({sig}) {{")
             self.indent_level += 1
-            for stmt in node.body:
-                self.generate(stmt)
+            for st in node.body:
+                self.generate(st)
             self.indent_level -= 1
             self.emit("}")
 
@@ -109,7 +132,8 @@ class CGenerator:
             # Aqui há uma simplificação: toda variável é declarada como int. Isso pode ser melhorado depois, se desejar gerar código com inferência ou tipos diferentes.
         elif isinstance(node, Assignment):
             expr = self.generate_expr(node.value)
-            self.emit(f"int {node.target.id} = {expr};")
+            t = self.infer_type(node.value, {})
+            self.emit(f"{t} {node.target.id} = {expr};")
 
         # COMANDOS SIMPLES
             # Traduções diretas dos comandos break, continue, e pass.
