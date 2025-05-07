@@ -56,6 +56,13 @@ def p_statement_indent(p):
     'statement : INDENT'
     p[0] = None
 
+# Comentário standalone
+def p_statement_comment(p):
+    '''statement : COMMENT
+                 | COMMENT NEWLINE'''
+    from ast_nodes import Comment
+    p[0] = Comment(p[1])
+
 # ---------------------------------------------------------------------
 # Comandos Simples
 # ---------------------------------------------------------------------

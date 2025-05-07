@@ -19,6 +19,7 @@ tokens = [
     'NEWLINE','INDENT','DEDENT',
     'COMMA',
     'TYPE',
+    'COMMENT',
 ]
 
 # PALAVRAS-CHAVE
@@ -60,7 +61,9 @@ t_COMMA = r','
 # Essa função ignora comentários iniciados por #. Eles não são retornados como tokens.
 def t_COMMENT(t):
     r'\#.*'
-    pass
+    # t.value recebe tudo depois do '#', opcionalmente sem a própria '#'
+    t.value = t.value[1:].lstrip()
+    return t
 
 # IDENTIFICADORES E PALAVRAS-CHAVE
 # Reconhece nomes de variáveis ou funções.

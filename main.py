@@ -3,6 +3,7 @@ from parser import parser
 from codegen import CGenerator
 
 codigo_python = '''
+# esse é um comentário de topo
 def soma(a, int b):
     return a + b
 
@@ -11,6 +12,7 @@ def media(float x, float y, float z):
 
 y = soma(2, 3)
 z = media(1.0, 2.5, 4.5)
+# fim do arquivo
 '''
 
 # Faz o parsing do código Python

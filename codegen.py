@@ -93,6 +93,10 @@ class CGenerator:
             self.emit("continue;")
         elif isinstance(node, Pass):
             self.emit("// pass")
+        # Comentário Python → comentário C
+        elif isinstance(node, Comment):
+            # emitir com // prefixo
+            self.emit(f"// {node.text}")
 
         # ERRO PARA NÓS NÃO TRATADOS
             # Levanta um erro caso seja passado um nó que ainda não tem suporte na geração de código.
