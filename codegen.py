@@ -41,7 +41,9 @@ class CGenerator:
     # Função Principal: Generate
         # Essa função navega na AST e chama recursivamente o código necessário para cada tipo de nó.
         # Ela trata os comandos e estruturas do programa (e não expressões).
-    def generate(self, node):
+    def generate(self, node, env=None, is_main=False):
+        if env is None:
+            env = {}
         # PROGRAM
             # Itera sobre todos os comandos do programa e gera código para cada um.
             # No final, retorna todo o código como uma string com quebras de linha.
@@ -75,8 +77,14 @@ class CGenerator:
             # Gerar main
             self.emit("int main() {")
             self.indent_level += 1
+
+            # Declaração antecipada de variáveis do main (sem inicialização)
+            for var, t in self.main_env.items():
+                self.emit(f"{t} {var};")
+
             for s in mains:
-                self.generate(s)
+                self.generate(s, self.main_env, is_main=True)
+                
             self.emit("return 0;")
             self.indent_level -= 1
             self.emit("}")
@@ -86,20 +94,28 @@ class CGenerator:
             # O nome da função vem de node.name, e o corpo é gerado recursivamente com node.body.
             # O corpo da função é indentado.
         elif isinstance(node, FunctionDef):
-            # Retorno e assinatura
-            env = {p: t for p, t in zip(node.params, node.types)}
+            # Cria o escopo local a partir dos parâmetros
+            local_env = {p: t for p, t in zip(node.params, node.types)}
+            
+            # Inferir tipo de retorno
             ret = 'void'
             for st in node.body:
                 if isinstance(st, Return):
-                    ret = self.infer_type(st.value, env)
+                    ret = self.infer_type(st.value, local_env)
                     break
+            
+            # Geração da assinatura
             sig = ', '.join(f"{t} {p}" for t, p in zip(node.types, node.params))
             self.emit(f"{ret} {node.name}({sig}) {{")
             self.indent_level += 1
+
+            # Gerar o corpo da função com o escopo local
             for st in node.body:
-                self.generate(st)
+                self.generate(st, local_env)  # <-- usa o escopo
+
             self.indent_level -= 1
             self.emit("}")
+
 
         # RETURN
         elif isinstance(node, Return):
@@ -113,14 +129,16 @@ class CGenerator:
         elif isinstance(node, If):
             self.emit(f"if ({self.generate_expr(node.condition)}) {{")
             self.indent_level += 1
+            local_env = env.copy()
             for stmt in node.body:
-                self.generate(stmt)
+                self.generate(stmt, local_env)
             self.indent_level -= 1
             if node.else_body:
                 self.emit("} else {")
                 self.indent_level += 1
+                local_env_else = env.copy()
                 for stmt in node.else_body:
-                    self.generate(stmt)
+                    self.generate(stmt, local_env_else)
                 self.indent_level -= 1
             self.emit("}")
 
@@ -131,8 +149,9 @@ class CGenerator:
         elif isinstance(node, While):
             self.emit(f"while ({self.generate_expr(node.condition)}) {{")
             self.indent_level += 1
+            local_env_while = env.copy()
             for stmt in node.body:
-                self.generate(stmt)
+                self.generate(stmt, local_env_while)
             self.indent_level -= 1
             self.emit("}")
 
@@ -141,24 +160,28 @@ class CGenerator:
             # Usa generate_expr para avaliar o lado direito.
             # Aqui há uma simplificação: toda variável é declarada como int. Isso pode ser melhorado depois, se desejar gerar código com inferência ou tipos diferentes.
         elif isinstance(node, Assignment):
-            # Tratamento especial para input()
+            var = node.target.id
             if isinstance(node.value, FunctionCall) and node.value.name == 'input':
-                var = node.target.id
-                t = self.infer_type(node.value, {})
-                # declarar buffer para string
-                self.emit(f"char {var}[256];")
-                self.main_env[var] = t
-                # prompt, se houver
+                t = self.infer_type(node.value, env)
+                if var not in env:
+                    self.emit(f"char {var}[256];")
+                env[var] = t
+                if is_main:
+                    self.main_env[var] = t
                 if node.value.args:
                     prompt = self.generate_expr(node.value.args[0])
                     self.emit(f"printf({prompt});")
-                # scanf para string com especificadores corretos
                 self.emit(f"scanf(\"%255s\", {var});")
             else:
                 expr = self.generate_expr(node.value)
-                t = self.infer_type(node.value, {})
-                self.emit(f"{t} {node.target.id} = {expr};")
-                self.main_env[node.target.id] = t
+                t = self.infer_type(node.value, env)
+                if var not in env:
+                    self.emit(f"{t} {var} = {expr};")
+                else:
+                    self.emit(f"{var} = {expr};")
+                env[var] = t
+                if is_main:
+                    self.main_env[var] = t
 
         # COMANDOS SIMPLES
             # Traduções diretas dos comandos break, continue, e pass.
