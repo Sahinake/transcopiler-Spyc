@@ -5,11 +5,14 @@ Este projeto foi desenvolvido como parte da disciplina de **Compiladores** e uti
 
 ## Funcionalidades
 
-- Suporte a comandos: `pass`, `break`, `continue`
-- Definição de funções (`def`)
-- Estruturas de controle: `if`, `else`, `while`
-- Atribuições e expressões aritméticas
-- Geração de código C com identação apropriada
+- ✅ Suporte a comandos: `pass`, `break`, `continue`
+- ✅ Definição de funções com parâmetros e `return`
+- ✅ Escopo local de variáveis por bloco (funções, `if`, `while`, etc.)
+- ✅ Estruturas de controle: `if`, `else`, `while`
+- ✅ Atribuições, operações aritméticas e booleanas
+- ✅ Função `print()` com múltiplos argumentos e tipos mistos (`int`, `float`, `str`)
+- ✅ Função `input()` com leitura de strings e mensagem opcional
+- ✅ Geração de código C com indentação apropriada
 
 ## Estrutura do Projeto
 ```bash
@@ -39,13 +42,20 @@ pip install -r requirements.txt
 Execute o transpilador passando um código Python válido:
 
 ```bash
-python main.py entrada.py
+python main.py input.py
 ```
-A saída em C será impressa no terminal ou salva em um arquivo de saída, conforme configurado.
+A saída em C será impressa no terminal ou salva em um arquivo de saída, conforme configurado. Para compilar e executar o código em C equivalente, use os comandos:
+```bash
+gcc output/output.c -o ./output/program
+./output/program
+```
+
 
 ### Observações
 - O código Python de entrada deve seguir a indentação correta (como no Python real).
 - Apenas um subconjunto da linguagem é suportado por enquanto.
+- Tipos de variáveis são inferidos automaticamente com base nas expressões (ex: int, float, char*).
+- Variáveis lidas com input() são tratadas como strings (char[]).
 
 ## Autores
 Projeto desenvolvido por estudantes da disciplina de Compiladores.
