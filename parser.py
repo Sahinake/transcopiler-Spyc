@@ -112,6 +112,11 @@ def p_funcdef(p):
     param_names, param_types = p[4]
     p[0] = FunctionDef(p[2], param_names, param_types, p[8])
 
+# Definindo uma função sem parâmetros
+def p_funcdef_no_params(p):
+    'statement : DEF NAME LPAREN RPAREN COLON NEWLINE block'
+    p[0] = FunctionDef(p[2], [], [], p[7])
+
 # Definindo um único parâmetro com tipo
 def p_param(p):
     '''param : TYPE NAME
