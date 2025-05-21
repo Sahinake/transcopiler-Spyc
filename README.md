@@ -16,6 +16,8 @@ Este projeto foi desenvolvido como parte da disciplina de **Compiladores** e uti
 
 ## Estrutura do Projeto
 ```bash
+├── input
+    └── input.py             # Código-fonte em Python
 ├── output
     └── output.c             # Código equivalente em C
 ├── lexer.py                 # Analisador léxico (tokens)
@@ -42,7 +44,7 @@ pip install -r requirements.txt
 Execute o transpilador passando um código Python válido:
 
 ```bash
-python main.py input.py
+python main.py
 ```
 A saída em C será impressa no terminal ou salva em um arquivo de saída, conforme configurado. Para compilar e executar o código em C equivalente, use os comandos:
 ```bash
