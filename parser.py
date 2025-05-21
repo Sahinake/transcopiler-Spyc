@@ -12,7 +12,6 @@ precedence = (
     ('left',  'TIMES','DIVIDE'),
 )
 
-
 # ---------------------------------------------------------------------
 # PROGRAM
 # ---------------------------------------------------------------------
@@ -120,25 +119,25 @@ def p_funcdef_no_params(p):
 # Definindo um único parâmetro com tipo
 def p_param(p):
     '''param : TYPE NAME
-            | NAME'''
+             | NAME'''
     if len(p) == 3:
-        # veio com anotação explícita: p[1]=tipo, p[2]=nome
+        # veio com anotação explícita
         p[0] = (p[2], p[1])
     else:
-        # só NAME → inferimos int por padrão
-        p[0] = (p[1], 'int')
+        # sem anotação → tipo indefinido (para inferência posterior)
+        p[0] = (p[1], None)
 
 # Lista de parâmetros (separados por vírgula)
 def p_param_list(p):
     '''param_list : param_list COMMA param
                   | param'''
-    if len(p) == 4:  # caso com vírgula
-        names, types = p[1]  # parâmetros acumulados
-        name, type_ = p[3]  # novo parâmetro
-        p[0] = (names + [name], types + [type_])  # adiciona à lista de parâmetros
-    else:  # caso de um único parâmetro
+    if len(p) == 4:
+        names, types = p[1]         # listas acumuladas
+        name, type_ = p[3]          # novo parâmetro
+        p[0] = (names + [name], types + [type_])
+    else:
         name, type_ = p[1]
-        p[0] = ([name], [type_])  # começa com um parâmetro
+        p[0] = ([name], [type_])
 
 
 # ---------------------------------------------------------------------

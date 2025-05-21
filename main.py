@@ -2,37 +2,32 @@ import os
 from parser import parser
 from codegen import CGenerator
 
-codigo_python = '''
-# esse é um comentário de topo
-def soma(a, int b):
-    return a + b
+def main():
+    caminho_entrada = "input/input.py"
 
-def media(float x, float y, float z):
-    return (x + y + z) / 3
+    if not os.path.isfile(caminho_entrada):
+        print(f"Erro: arquivo '{caminho_entrada}' não encontrado.")
+        return
 
-y = soma(2, 3)
-z = media(1.0, 2.5, 4.5)
+    # Lê o conteúdo do arquivo input/input.py
+    with open(caminho_entrada, "r", encoding="utf-8") as f:
+        codigo_python = f.read()
 
-name = input("Enter your name: ")
-age = input("Enter your age: ")
-print("Hello,", name)
-print("You are", age, "years old")
+    # Faz o parsing do código Python
+    ast = parser.parse(codigo_python)
 
-# fim do arquivo
-'''
+    # Gera o código C
+    gen = CGenerator()
+    codigo_c = gen.generate(ast)
 
-# Faz o parsing do código Python
-ast = parser.parse(codigo_python)
+    # Cria a pasta 'output' se ela não existir
+    os.makedirs("output", exist_ok=True)
 
-# Gera o código C
-gen = CGenerator()
-codigo_c = gen.generate(ast)
+    # Salva o código C no arquivo output/output.c
+    with open("output/output.c", "w", encoding="utf-8") as f:
+        f.write(codigo_c)
 
-# Cria a pasta 'output' se ela não existir
-os.makedirs("output", exist_ok=True)
+    print("Código C gerado em 'output/output.c'")
 
-# Salva o código C no arquivo 'output/output.c'
-with open("output/output.c", "w") as f:
-    f.write(codigo_c)
-
-print("Código C gerado em 'output/output.c'")
+if __name__ == "__main__":
+    main()

@@ -29,6 +29,9 @@ reserved = {
     'if': 'IF',
     'else': 'ELSE',
     'while': 'WHILE',
+    'for': 'FOR',
+    'in': 'IN',
+    'range': 'RANGE',
     'break': 'BREAK',
     'continue': 'CONTINUE',
     'and': 'AND',
@@ -45,12 +48,12 @@ t_PLUS    = r'\+'
 t_MINUS   = r'-'
 t_TIMES   = r'\*'
 t_DIVIDE  = r'/'
-t_EQEQ    = r'=='
-t_NE      = r'!='
-t_LE      = r'<='
-t_GE      = r'>='
-t_LT      = r'<'
-t_GT      = r'>'
+t_EQEQ    = r'=='   # Igualdade
+t_NE      = r'!='   # Desigualdade
+t_LE      = r'<='   # Menor ou Igual
+t_GE      = r'>='   # Maior ou Igual
+t_LT      = r'<'    # Menor
+t_GT      = r'>'    # Maior
 t_ASSIGN  = r'='
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
@@ -180,7 +183,7 @@ def t_eof(t):
         if not hasattr(t.lexer, 'pending_tokens'):
             t.lexer.pending_tokens = []
         t.lexer.pending_tokens.append(tok)
-    return None  # Fim de arquivo, não retorna token
+    return None
 
 # CRIAÇÃO DO LEXER
 # -------------------------------------------------------------------------------------
